@@ -36,10 +36,16 @@ func main() {
 	done := make(chan interface{})
 	defer close(done)
 
-	urls := []string{"https://www.google.co.jp/", "https://dummyhost"}
+	errCount := 0
+	urls := []string{"https://www.google.co.jp/", "https://dummyhost", "b", "c"}
 	for result := range checkStatus(done, urls...) {
 		if result.Error != nil {
 			fmt.Printf("error: %v\n", result.Error)
+			errCount++
+			if errCount >= 3 {
+				fmt.Println("Too many erros. breaking!")
+				break
+			}
 			continue
 		}
 		fmt.Printf("Response: %v\n", result.Response.Status)
