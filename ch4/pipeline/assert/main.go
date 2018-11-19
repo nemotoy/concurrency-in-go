@@ -1,11 +1,9 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "fmt"
 
 func main() {
+
 	repeat := func(
 		done <-chan interface{},
 		values ...interface{},
@@ -45,35 +43,31 @@ func main() {
 		return takeStream
 	}
 
-	repeatFn := func(
+	toString := func(
 		done <-chan interface{},
-		fn func() interface{},
-	) <-chan interface{} {
-		valuesStream := make(chan interface{})
+		valuesStream <-chan interface{},
+	) <-chan string {
+		stringStream := make(chan string)
 		go func() {
-			defer close(valuesStream)
-			for {
+			defer close(stringStream)
+			for v := range valuesStream {
 				select {
 				case <-done:
 					return
-				case valuesStream <- fn():
+				case stringStream <- v.(string):
 				}
 			}
 		}()
-		return valuesStream
+		return stringStream
 	}
-	
+
 	done := make(chan interface{})
 	defer close(done)
 
-	for num := range take(done, repeat(done, 1), 10) {
-		fmt.Printf("%v \n", num)
+	var message string
+	for token := range toString(done, take(done, repeat(done, "I", "am."), 5)) {
+		message += token
 	}
 
-	rand := func() interface{} { return rand.Int() }
-
-	for num := range take(done, repeatFn(done, rand), 10) {
-		fmt.Println(num)
-	}
-
+	fmt.Printf("message: %s...\n", message)
 }
